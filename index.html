@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#3a9e6f">
+  <title>Weekly Task Tracker</title>
+  <style>
+    /* ── CSS Variables ─────────────────────────────────────────── */
+    :root {
+      --bg:         #f5f0e8;
+      --surface:    #ffffff;
+      --surface2:   #faf7f2;
+      --text:       #1a1a1a;
+      --text-muted: #6b6b6b;
+      --border:     #e0d9ce;
+      --gold:       #3a9e6f;
+      --gold-light: #e8f5ee;
+      --gold-dark:  #256e4a;
+      --shadow:     0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:  0 4px 16px rgba(0,0,0,.12);
+      --radius:     8px;
+      --radius-lg:  14px;
+      --transition: .18s ease;
+    }
+    [data-theme="dark"] {
+      --bg:         #111111;
+      --surface:    #1c1c1c;
+      --surface2:   #161616;
+      --text:       #f0ece4;
+      --text-muted: #888;
+      --border:     #2c2c2c;
+      --gold:       #4db87f;
+      --gold-light: #0d2419;
+      --gold-dark:  #6fd49a;
+      --shadow:     0 1px 3px rgba(0,0,0,.4);
+      --shadow-md:  0 4px 16px rgba(0,0,0,.5);
+    }
+
+    /* ── Reset & Base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background var(--transition), color var(--transition);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--gold); }
+
+    /* ── Header ────────────────────────────────────────────────── */
+    .header {
+      position: sticky; top: 0; z-index: 200;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: var(--shadow);
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .logo {
+      font-size: 18px; font-weight: 700; letter-spacing: -.4px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .logo-mark {
+      width: 28px; height: 28px; border-radius: 7px;
+      background: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: #fff; font-weight: 800; flex-shrink: 0;
+    }
+    .header-actions { display: flex; gap: 6px; align-items: center; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 7px 13px;
+      border-radius: var(--radius);
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-muted);
+      transition: all var(--transition); white-space: nowrap;
+      text-decoration: none;
+    }
+    .btn:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-light); }
+    .btn-primary {
+      background: var(--gold); color: #fff; border-color: var(--gold);
+    }
+    .btn-primary:hover { background: var(--gold-dark); border-color: var(--gold-dark); color: #fff; }
+    .btn-danger:hover { border-color: #e53e3e; color: #e53e3e; background: #fff5f5; }
+    [data-theme="dark"] .btn-danger:hover { background: #3b0a0a; }
+
+    /* ── Container ─────────────────────────────────────────────── */
+    .container { max-width: 880px; margin: 0 auto; padding: 28px 16px 60px; }
+
+    /* ── Dashboard ─────────────────────────────────────────────── */
+    .dashboard {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+      margin-bottom: 22px;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 18px 14px;
+      text-align: center; box-shadow: var(--shadow);
+      transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+    }
+    .stat-card:hover { box-shadow: var(--shadow-md); }
+    .stat-number {
+      font-size: 32px; font-weight: 800; color: var(--gold);
+      line-height: 1; margin-bottom: 5px; letter-spacing: -1px;
+    }
+    .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; }
+
+    /* Week progress bar inside stat-card */
+    .progress-bar-wrap { margin-top: 10px; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: var(--gold); border-radius: 99px; transition: width .4s ease; }
+
+    /* ── Week Nav ──────────────────────────────────────────────── */
+    .week-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 12px 16px; margin-bottom: 18px;
+      box-shadow: var(--shadow);
+    }
+    .week-title { font-size: 15px; font-weight: 600; }
+    .week-nav-right { display: flex; gap: 6px; align-items: center; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+    /* ── Add Task ──────────────────────────────────────────────── */
+    .add-task-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 18px; margin-bottom: 18px;
+      box-shadow: var(--shadow);
+    }
+    .add-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .input {
+      padding: 9px 13px; border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--bg); color: var(--text); font-size: 14px;
+      outline: none; transition: border-color var(--transition), background var(--transition);
+      font-family: inherit;
+    }
+    .input:focus { border-color: var(--gold); }
+    .input::placeholder { color: var(--text-muted); }
+    .input-main { flex: 1; min-width: 180px; }
+    .input-sm { min-width: 100px; }
+    select.input { cursor: pointer; }
+    .add-meta { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .hint { font-size: 11px; color: var(--text-muted); margin-top: 7px; }
+    kbd {
+      background: var(--border); color: var(--text-muted);
+      padding: 1px 5px; border-radius: 4px; font-size: 11px; font-family: inherit;
+    }
+
+    /* ── Toolbar ───────────────────────────────────────────────── */
+    .toolbar { display: flex; gap: 7px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+    .input-search { min-width: 160px; flex: 1; }
+    .filter-group { display: flex; gap: 4px; }
+    .filter-btn {
+      padding: 6px 12px; border-radius: var(--radius); border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-muted); font-size: 12px;
+      cursor: pointer; transition: all var(--transition); font-weight: 500;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      border-color: var(--gold); color: var(--gold); background: var(--gold-light);
+    }
+
+    /* ── Day Section ───────────────────────────────────────────── */
+    .day-section { margin-bottom: 14px; }
+    .day-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 14px; border-radius: var(--radius);
+      border-left: 3px solid var(--border); background: var(--surface2);
+      margin-bottom: 7px;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .day-header.today { background: var(--gold-light); border-left-color: var(--gold); }
+    .day-header-left { display: flex; align-items: baseline; gap: 8px; }
+    .day-name { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; }
+    .day-header.today .day-name { color: var(--gold-dark); }
+    .day-date-label { font-size: 12px; color: var(--text-muted); }
+    .day-header-right { display: flex; align-items: center; gap: 8px; }
+    .day-count { font-size: 11px; color: var(--text-muted); background: var(--border); padding: 2px 8px; border-radius: 20px; }
+    .day-progress { width: 60px; height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .day-progress-fill { height: 100%; background: var(--gold); border-radius: 99px; transition: width .4s ease; }
+
+    /* ── Task Items ────────────────────────────────────────────── */
+    .task-list { display: flex; flex-direction: column; gap: 5px; }
+    .task-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 11px 13px;
+      transition: border-color var(--transition), box-shadow var(--transition), opacity var(--transition);
+      box-shadow: var(--shadow);
+    }
+    .task-item:hover { border-color: var(--gold); box-shadow: 0 2px 10px rgba(58,158,111,.12); }
+    .task-item.completed { opacity: .55; }
+
+    .task-main { display: flex; align-items: center; gap: 10px; }
+    .task-check {
+      width: 17px; height: 17px; accent-color: var(--gold);
+      cursor: pointer; flex-shrink: 0;
+    }
+    .task-text { flex: 1; font-size: 14px; line-height: 1.4; cursor: default; word-break: break-word; }
+    .task-item.completed .task-text { text-decoration: line-through; color: var(--text-muted); }
+
+    .task-badges { display: flex; gap: 4px; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
+    .badge {
+      font-size: 10px; font-weight: 700; padding: 2px 7px;
+      border-radius: 20px; text-transform: uppercase; letter-spacing: .3px;
+    }
+    .badge-high   { background: #fee2e2; color: #b91c1c; }
+    .badge-medium { background: #fef3c7; color: #92400e; }
+    .badge-low    { background: #d1fae5; color: #065f46; }
+    [data-theme="dark"] .badge-high   { background: #3b0a0a; color: #fc8181; }
+    [data-theme="dark"] .badge-medium { background: #2d1f00; color: #fbbf24; }
+    [data-theme="dark"] .badge-low    { background: #052e16; color: #6ee7b7; }
+    .badge-tag { background: var(--gold-light); color: var(--gold-dark); border: 1px solid rgba(58,158,111,.4); }
+
+    .btn-text {
+      background: none; border: none; cursor: pointer; font-size: 12px;
+      color: var(--text-muted); padding: 2px 5px; border-radius: 4px;
+      transition: color var(--transition); font-family: inherit;
+    }
+    .btn-text:hover { color: var(--gold); }
+    .btn-delete {
+      background: none; border: none; cursor: pointer; color: var(--text-muted);
+      font-size: 13px; padding: 2px 5px; border-radius: 4px;
+      transition: color var(--transition); opacity: 0;
+    }
+    .task-item:hover .btn-delete { opacity: 1; }
+    .btn-delete:hover { color: #e53e3e; }
+
+    /* ── Task Details ──────────────────────────────────────────── */
+    .task-details {
+      display: none; flex-wrap: wrap; gap: 16px;
+      margin-top: 10px; padding-top: 10px;
+      border-top: 1px dashed var(--border);
+    }
+    .task-details.open { display: flex; }
+    .detail-item { display: flex; flex-direction: column; gap: 2px; min-width: 100px; }
+    .detail-label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); }
+    .detail-value { font-size: 12px; font-weight: 500; color: var(--text); }
+    .detail-live { color: var(--gold-dark); font-weight: 700; }
+    .task-note {
+      flex: 1 1 100%; font-size: 12px; color: var(--text-muted);
+      border-left: 2px solid var(--gold-light); padding-left: 8px;
+      font-style: italic;
+    }
+
+    /* ── Empty state ───────────────────────────────────────────── */
+    .empty-day {
+      padding: 12px; text-align: center; font-size: 13px; color: var(--text-muted);
+      border: 1px dashed var(--border); border-radius: var(--radius);
+      font-style: italic;
+    }
+
+    /* ── Confetti canvas ───────────────────────────────────────── */
+    #confetti-canvas {
+      position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0;
+      transition: opacity .3s;
+    }
+
+    /* ── Modal ─────────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.5); z-index: 500;
+      align-items: center; justify-content: center; padding: 16px;
+      backdrop-filter: blur(2px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border-radius: var(--radius-lg);
+      padding: 28px; max-width: 500px; width: 100%;
+      box-shadow: var(--shadow-md); animation: slideUp .2s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .modal-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+    .field { margin-bottom: 14px; }
+    .field-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 5px; }
+    .field-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .status-msg { margin-top: 14px; padding: 11px 14px; border-radius: var(--radius); font-size: 13px; display: none; }
+    .status-msg.success { display: block; background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+    .status-msg.error   { display: block; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    [data-theme="dark"] .status-msg.success { background: #052e16; color: #6ee7b7; border-color: #065f46; }
+    [data-theme="dark"] .status-msg.error   { background: #3b0a0a; color: #fc8181; border-color: #b91c1c; }
+    .status-msg a { color: inherit; font-weight: 700; }
+
+    /* ── Responsive ────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .dashboard { grid-template-columns: repeat(2, 1fr); }
+      .header { padding: 0 14px; }
+      .container { padding: 18px 12px 60px; }
+      .add-row { flex-direction: column; }
+      .btn-primary.btn-add { width: 100%; justify-content: center; }
+      .stat-number { font-size: 26px; }
+      .header-actions .btn span { display: none; }
+    }
+    @media (max-width: 400px) {
+      .filter-group { flex-wrap: wrap; }
+      .week-title { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Header ──────────────────────────────────────────────────────── -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">W</div>
+    WeeklyTasks
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-sm" onclick="exportCSV()" title="Export to CSV">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
+      <span>Export</span>
+    </button>
+    <button class="btn btn-sm" onclick="openPublish()" title="Publish to GitHub Pages">
+      <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"></path></svg>
+      <span>Publish</span>
+    </button>
+    <button class="btn btn-sm" id="themeBtn" onclick="toggleTheme()">
+      <span id="themeIcon">☀</span>
+      <span id="themeLabel">Light</span>
+    </button>
+  </div>
+</header>
+
+<!-- ─── Main ─────────────────────────────────────────────────────────── -->
+<main class="container">
+
+  <!-- Dashboard -->
+  <div class="dashboard">
+    <div class="stat-card">
+      <div class="stat-number" id="sTotal">0</div>
+      <div class="stat-label">Total Tasks</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="sCompleted">0</div>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="sOutstanding">0</div>
+      <div class="stat-label">Outstanding</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="sRate">—</div>
+      <div class="stat-label">Completion Rate</div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="weekProgress" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Week Nav -->
+  <div class="week-nav">
+    <button class="btn btn-sm" onclick="shiftWeek(-1)">← Prev</button>
+    <div class="week-title" id="weekTitle">May 3 – May 9, 2026</div>
+    <div class="week-nav-right">
+      <button class="btn btn-sm" onclick="goToday()">Today</button>
+      <button class="btn btn-sm" onclick="shiftWeek(1)">Next →</button>
+    </div>
+  </div>
+
+  <!-- Add Task -->
+  <div class="add-task-card">
+    <div class="add-row">
+      <input id="taskInput" class="input input-main" type="text" placeholder="What needs to get done? (Enter to add)">
+      <select id="taskDay" class="input input-sm" title="Day of week">
+        <option value="">Today</option>
+        <option value="0">Sunday</option>
+        <option value="1">Monday</option>
+        <option value="2">Tuesday</option>
+        <option value="3">Wednesday</option>
+        <option value="4">Thursday</option>
+        <option value="5">Friday</option>
+        <option value="6">Saturday</option>
+      </select>
+      <select id="taskPriority" class="input input-sm" title="Priority">
+        <option value="medium">● Medium</option>
+        <option value="high">▲ High</option>
+        <option value="low">▼ Low</option>
+      </select>
+      <button class="btn btn-primary btn-add" onclick="addTask()">+ Add Task</button>
+    </div>
+    <div class="add-meta">
+      <input id="taskTag" class="input" style="flex:1;min-width:120px" type="text" placeholder="Tag (e.g. work, personal)">
+      <input id="taskNote" class="input" style="flex:2;min-width:160px" type="text" placeholder="Note / description (optional)">
+    </div>
+    <div class="hint"><kbd>Enter</kbd> to add &nbsp;·&nbsp; <kbd>Esc</kbd> to clear</div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <input id="searchInput" class="input input-search" type="text" placeholder="🔍  Search tasks…" oninput="render()">
+    <div class="filter-group">
+      <button class="filter-btn active" data-f="all" onclick="setFilter(this)">All</button>
+      <button class="filter-btn" data-f="active" onclick="setFilter(this)">Active</button>
+      <button class="filter-btn" data-f="completed" onclick="setFilter(this)">Done</button>
+      <button class="filter-btn" data-f="high" onclick="setFilter(this)">🔴 High</button>
+    </div>
+    <button class="btn btn-sm btn-danger" onclick="clearCompleted()">Clear Completed</button>
+  </div>
+
+  <!-- Week view -->
+  <div id="weekView"><div class="day-section">
+      <div class="day-header ">
+        <div class="day-header-left">
+          <span class="day-name">Sunday</span>
+          <span class="day-date-label">May 3</span>
+        </div>
+        <div class="day-header-right">
+          <div class="day-progress"><div class="day-progress-fill" style="width:0%"></div></div>
+          <span class="day-count">0/0</span>
+        </div>
+      </div>
+      <div class="task-list" id="tl-2026-05-03">
+        <div class="empty-day">No tasks</div>
+      </div></div><div class="day-section">
+      <div class="day-header today">
+        <div class="day-header-left">
+          <span class="day-name">Monday · Today</span>
+          <span class="day-date-label">May 4</span>
+        </div>
+        <div class="day-header-right">
+          <div class="day-progress"><div class="day-progress-fill" style="width:0%"></div></div>
+          <span class="day-count">0/0</span>
+        </div>
+      </div>
+      <div class="task-list" id="tl-2026-05-04">
+        <div class="empty-day">Nothing here yet — add something above ↑</div>
+      </div></div><div class="day-section">
+      <div class="day-header ">
+        <div class="day-header-left">
+          <span class="day-name">Tuesday</span>
+          <span class="day-date-label">May 5</span>
+        </div>
+        <div class="day-header-right">
+          <div class="day-progress"><div class="day-progress-fill" style="width:0%"></div></div>
+          <span class="day-count">0/0</span>
+        </div>
+      </div>
+      <div class="task-list" id="tl-2026-05-05">
+        <div class="empty-day">No tasks</div>
+      </div></div><div class="day-section">
+      <div class="day-header ">
+        <div class="day-header-left">
+          <span class="day-name">Wednesday</span>
+          <span class="day-date-label">May 6</span>
+        </div>
+        <div class="day-header-right">
+          <div class="day-progress"><div class="day-progress-fill" style="width:0%"></div></div>
+          <span class="day-count">0/0</span>
+        </div>
+      </div>
+      <div class="task-list" id="tl-2026-05-06">
+        <div class="empty-day">No tasks</div>
+      </div></div><div class="day-section">
+      <div class="day-header ">
+        <div class="day-header-left">
+          <span class="day-name">Thursday</span>
+          <span class="day-date-label">May 7</span>
+        </div>
+        <div class="day-header-right">
+          <div class="day-progress"><div class="day-progress-fill" style="width:0%"></div></div>
+          <span class="day-count">0/0</span>
+        </div>
+      </div>
+      <div class="task-list" id="tl-2026-05-07">
+        <div class="empty-day">No tasks</div>
+      </div></div><div class="day-section">
+      <div class="day-header ">
+        <div class="day-header-left">
+          <span class="day-name">Friday</span>
+          <span class="day-date-label">May 8</span>
+        </div>
+        <div class="day-header-right">
+          <div class="day-progress"><div class="day-progress-fill" style="width:0%"></div></div>
+          <span class="day-count">0/0</span>
+        </div>
+      </div>
+      <div class="task-list" id="tl-2026-05-08">
+        <div class="empty-day">No tasks</div>
+      </div></div><div class="day-section">
+      <div class="day-header ">
+        <div class="day-header-left">
+          <span class="day-name">Saturday</span>
+          <span class="day-date-label">May 9</span>
+        </div>
+        <div class="day-header-right">
+          <div class="day-progress"><div class="day-progress-fill" style="width:0%"></div></div>
+          <span class="day-count">0/0</span>
+        </div>
+      </div>
+      <div class="task-list" id="tl-2026-05-09">
+        <div class="empty-day">No tasks</div>
+      </div></div></div>
+
+</main>
+
+<!-- ─── Publish Modal ─────────────────────────────────────────────────── -->
+<div class="modal-overlay open" id="publishModal">
+  <div class="modal">
+    <div class="modal-title">⚡ Publish to GitHub Pages</div>
+    <div class="modal-sub">Your task tracker will be live as a personal web app — free forever.</div>
+
+    <div class="field">
+      <label class="field-label">GitHub Username</label>
+      <input id="ghUser" class="input" style="width:100%" type="text" placeholder="your-username">
+    </div>
+    <div class="field">
+      <label class="field-label">Repository Name</label>
+      <input id="ghRepo" class="input" style="width:100%" type="text" value="weekly-tasks" placeholder="weekly-tasks" oninput="const v=this.value.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9._-]/g,'');
+                      const note=document.getElementById('repoNote');
+                      if(v!==this.value){note.textContent='Will be saved as: '+v;note.style.display='block';}
+                      else{note.style.display='none';}">
+      <div id="repoNote" class="field-hint" style="display:none;color:var(--gold-dark);font-weight:600;"></div>
+    </div>
+    <div class="field">
+      <label class="field-label">Personal Access Token</label>
+      <input id="ghToken" class="input" style="width:100%" type="password" placeholder="ghp_xxxxxxxxxxxx">
+      <div class="field-hint">
+        <a href="https://github.com/settings/tokens/new?scopes=repo&amp;description=Weekly+Task+Tracker" target="_blank" rel="noopener">
+          Create a token
+        </a> with <strong>repo</strong> scope — it never leaves your browser.
+      </div>
+    </div>
+
+    <div class="status-msg " id="publishStatus"></div>
+
+    <div class="modal-actions">
+      <button class="btn" onclick="closePublish()">Cancel</button>
+      <button class="btn btn-primary" id="publishBtn" onclick="doPublish()" disabled="">Publishing…</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Confetti Canvas ───────────────────────────────────────────────── -->
+<canvas id="confetti-canvas"></canvas>
+
+<!-- ─── Script ──────────────────────────────────────────────────────── -->
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════════ */
+const STORE_KEY = 'weeklytasks_v3';
+let tasks        = [];
+let weekOffset   = 0;
+let activeFilter = 'all';
+
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS= ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* ═══════════════════════════════════════════════════════════════════
+   STORAGE
+═══════════════════════════════════════════════════════════════════ */
+function load() {
+  try { tasks = JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); }
+  catch { tasks = []; }
+}
+function save() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(tasks));
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DATE HELPERS
+═══════════════════════════════════════════════════════════════════ */
+function midnight(d) { const c=new Date(d); c.setHours(0,0,0,0); return c; }
+function isoDate(d)  { return d.toISOString().split('T')[0]; }
+
+function weekDates(offset=0) {
+  const now = midnight(new Date());
+  const sun = new Date(now);
+  sun.setDate(now.getDate() - now.getDay() + offset*7);
+  return Array.from({length:7}, (_,i) => { const d=new Date(sun); d.setDate(sun.getDate()+i); return d; });
+}
+
+function today() { return midnight(new Date()); }
+
+function friendlyDate(iso) {
+  const d = new Date(iso);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()} · ${d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}`;
+}
+
+function formatDuration(ms) {
+  const mins  = Math.floor(ms/60000);
+  const hours = Math.floor(mins/60);
+  const days  = Math.floor(hours/24);
+  if (days>0)  return `${days}d ${hours%24}h`;
+  if (hours>0) return `${hours}h ${mins%60}m`;
+  if (mins>0)  return `${mins}m`;
+  return 'Just added';
+}
+
+function taskDuration(t) {
+  const end = (t.completed && t.timestampCompleted) ? new Date(t.timestampCompleted) : new Date();
+  return end - new Date(t.timestampAdded);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TASK CRUD
+═══════════════════════════════════════════════════════════════════ */
+function addTask() {
+  const input = document.getElementById('taskInput');
+  const text  = input.value.trim();
+  if (!text) { input.focus(); return; }
+
+  const priority = document.getElementById('taskPriority').value;
+  const tag      = document.getElementById('taskTag').value.trim() || null;
+  const note     = document.getElementById('taskNote').value.trim() || null;
+  const dayVal   = document.getElementById('taskDay').value;
+
+  const wdates = weekDates(weekOffset);
+  let targetDate;
+  if (dayVal === '') {
+    const td = today();
+    targetDate = weekOffset === 0 ? td : wdates[td.getDay()];
+  } else {
+    targetDate = wdates[parseInt(dayVal)];
+  }
+
+  tasks.push({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+    text, priority, tag, note,
+    completed: false,
+    dateKey:  isoDate(targetDate),
+    dayOfWeek: targetDate.getDay(),
+    timestampAdded:     new Date().toISOString(),
+    timestampCompleted: null,
+  });
+
+  save();
+  render();
+
+  input.value = '';
+  document.getElementById('taskTag').value  = '';
+  document.getElementById('taskNote').value = '';
+  input.focus();
+}
+
+function toggleTask(id) {
+  const t = tasks.find(x=>x.id===id);
+  if (!t) return;
+  t.completed = !t.completed;
+  t.timestampCompleted = t.completed ? new Date().toISOString() : null;
+  save();
+  render();
+  if (t.completed) maybeConfetti(t.dateKey);
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter(x=>x.id!==id);
+  save(); render();
+}
+
+function clearCompleted() {
+  const keys = new Set(weekDates(weekOffset).map(isoDate));
+  tasks = tasks.filter(t => !(t.completed && keys.has(t.dateKey)));
+  save(); render();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FILTER
+═══════════════════════════════════════════════════════════════════ */
+function setFilter(btn) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  activeFilter = btn.dataset.f;
+  render();
+}
+
+function passesFilter(t) {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  if (q && !t.text.toLowerCase().includes(q) && !(t.tag&&t.tag.toLowerCase().includes(q))) return false;
+  if (activeFilter==='active')    return !t.completed;
+  if (activeFilter==='completed') return t.completed;
+  if (activeFilter==='high')      return t.priority==='high';
+  return true;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════════════════════════════ */
+function render() {
+  const wdates  = weekDates(weekOffset);
+  const td      = today();
+  const [first,last] = [wdates[0], wdates[6]];
+
+  // Week title
+  document.getElementById('weekTitle').textContent =
+    `${MONTHS[first.getMonth()]} ${first.getDate()} – ${MONTHS[last.getMonth()]} ${last.getDate()}, ${last.getFullYear()}`;
+
+  const container = document.getElementById('weekView');
+  container.innerHTML = '';
+
+  wdates.forEach(date => {
+    const dk      = isoDate(date);
+    const isToday = date.getTime() === td.getTime();
+    const allDay  = tasks.filter(t=>t.dateKey===dk);
+    const shown   = allDay.filter(passesFilter);
+    const done    = shown.filter(t=>t.completed).length;
+    const pct     = shown.length ? Math.round(done/shown.length*100) : 0;
+
+    const section = document.createElement('div');
+    section.className = 'day-section';
+
+    section.innerHTML = `
+      <div class="day-header ${isToday?'today':''}">
+        <div class="day-header-left">
+          <span class="day-name">${DAYS[date.getDay()]}${isToday?' · Today':''}</span>
+          <span class="day-date-label">${MONTHS[date.getMonth()]} ${date.getDate()}</span>
+        </div>
+        <div class="day-header-right">
+          <div class="day-progress"><div class="day-progress-fill" style="width:${pct}%"></div></div>
+          <span class="day-count">${done}/${shown.length}</span>
+        </div>
+      </div>
+      <div class="task-list" id="tl-${dk}">
+        ${shown.length===0 ? `<div class="empty-day">${isToday?'Nothing here yet — add something above ↑':'No tasks'}</div>` : ''}
+      </div>`;
+
+    container.appendChild(section);
+
+    const list = document.getElementById(`tl-${dk}`);
+    shown.forEach(t => list.appendChild(makeTaskEl(t)));
+  });
+
+  updateDashboard();
+}
+
+function makeTaskEl(t) {
+  const div = document.createElement('div');
+  div.className = `task-item${t.completed?' completed':''}`;
+  div.id = `ti-${t.id}`;
+
+  const dur = formatDuration(taskDuration(t));
+
+  div.innerHTML = `
+    <div class="task-main">
+      <input type="checkbox" class="task-check" ${t.completed?'checked':''} onchange="toggleTask('${t.id}')" />
+      <span class="task-text">${esc(t.text)}</span>
+      <div class="task-badges">
+        ${t.tag ? `<span class="badge badge-tag">${esc(t.tag)}</span>` : ''}
+        <span class="badge badge-${t.priority}">${t.priority}</span>
+        <button class="btn-text" onclick="toggleDetails('${t.id}')">details</button>
+        <button class="btn-delete" onclick="deleteTask('${t.id}')" title="Delete">✕</button>
+      </div>
+    </div>
+    <div class="task-details" id="td-${t.id}">
+      <div class="detail-item">
+        <span class="detail-label">Added</span>
+        <span class="detail-value">${friendlyDate(t.timestampAdded)}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">${t.completed?'Total time':'Outstanding'}</span>
+        <span class="detail-value${t.completed?'':' detail-live'}" data-live="${t.id}">${dur}</span>
+      </div>
+      ${t.timestampCompleted ? `
+      <div class="detail-item">
+        <span class="detail-label">Completed</span>
+        <span class="detail-value">${friendlyDate(t.timestampCompleted)}</span>
+      </div>` : ''}
+      ${t.note ? `<div class="task-note">${esc(t.note)}</div>` : ''}
+    </div>`;
+
+  return div;
+}
+
+function toggleDetails(id) {
+  document.getElementById(`td-${id}`)?.classList.toggle('open');
+}
+
+function esc(s) {
+  const d=document.createElement('div');
+  d.appendChild(document.createTextNode(s));
+  return d.innerHTML;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════════════════════ */
+function updateDashboard() {
+  const keys  = new Set(weekDates(weekOffset).map(isoDate));
+  const week  = tasks.filter(t=>keys.has(t.dateKey));
+  const done  = week.filter(t=>t.completed).length;
+  const total = week.length;
+  const pct   = total ? Math.round(done/total*100) : 0;
+
+  document.getElementById('sTotal').textContent       = total;
+  document.getElementById('sCompleted').textContent   = done;
+  document.getElementById('sOutstanding').textContent = total - done;
+  document.getElementById('sRate').textContent        = total ? pct+'%' : '—';
+  document.getElementById('weekProgress').style.width = pct+'%';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LIVE DURATIONS  (runs every minute)
+═══════════════════════════════════════════════════════════════════ */
+function tickDurations() {
+  document.querySelectorAll('[data-live]').forEach(el => {
+    const t = tasks.find(x=>x.id===el.dataset.live);
+    if (t && !t.completed) el.textContent = formatDuration(taskDuration(t));
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   WEEK NAVIGATION
+═══════════════════════════════════════════════════════════════════ */
+function shiftWeek(d) { weekOffset += d; render(); }
+function goToday()    { weekOffset  = 0; render(); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════════════════ */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const dark = theme==='dark';
+  document.getElementById('themeIcon').textContent  = dark ? '☀' : '🌙';
+  document.getElementById('themeLabel').textContent = dark ? 'Light' : 'Dark';
+  localStorage.setItem('theme', theme);
+}
+function toggleTheme() {
+  applyTheme(document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
+}
+function loadTheme() {
+  const saved = localStorage.getItem('theme') ||
+    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  applyTheme(saved);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EXPORT CSV
+═══════════════════════════════════════════════════════════════════ */
+function exportCSV() {
+  const cols = ['Text','Priority','Tag','Note','Completed','Date Added','Date Completed','Duration (min)'];
+  const rows = tasks.map(t => [
+    t.text, t.priority, t.tag||'', t.note||'',
+    t.completed?'Yes':'No',
+    t.timestampAdded, t.timestampCompleted||'',
+    t.completed ? Math.round(taskDuration(t)/60000) : ''
+  ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
+
+  const blob = new Blob([[cols.join(','),...rows].join('\n')], {type:'text/csv'});
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob),
+    download: `tasks_${isoDate(new Date())}.csv`
+  });
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONFETTI  (fires when a full day is completed)
+═══════════════════════════════════════════════════════════════════ */
+let confettiTimer = null;
+function maybeConfetti(dateKey) {
+  const dayTasks = tasks.filter(t=>t.dateKey===dateKey);
+  if (!dayTasks.length || dayTasks.some(t=>!t.completed)) return;
+  launchConfetti();
+}
+
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx    = canvas.getContext('2d');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.style.opacity = '1';
+
+  const COLORS = ['#3a9e6f','#e8f5ee','#1a1a1a','#ffffff','#4db87f','#6fd49a'];
+  const pieces = Array.from({length: 120}, () => ({
+    x:  Math.random() * canvas.width,
+    y: -10 - Math.random()*100,
+    r:  3 + Math.random()*5,
+    d:  2 + Math.random()*3,
+    color: COLORS[Math.floor(Math.random()*COLORS.length)],
+    tilt: Math.random()*10-5,
+    tiltSpeed: 0.1 + Math.random()*0.2,
+    ang: 0
+  }));
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p => {
+      p.ang += p.tiltSpeed;
+      p.y   += p.d;
+      p.x   += Math.sin(p.ang) * 1.5;
+      p.tilt = Math.sin(p.ang) * 12;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, p.r, p.r/2, p.tilt*Math.PI/180, 0, 2*Math.PI);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+    });
+    frame++;
+    if (frame < 160) requestAnimationFrame(draw);
+    else { canvas.style.opacity='0'; }
+  }
+  draw();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GITHUB PAGES PUBLISH
+═══════════════════════════════════════════════════════════════════ */
+function openPublish() {
+  const u = localStorage.getItem('gh_user'), r = localStorage.getItem('gh_repo');
+  if (u) document.getElementById('ghUser').value = u;
+  if (r) document.getElementById('ghRepo').value = r;
+  const s = document.getElementById('publishStatus');
+  s.className = 'status-msg'; s.innerHTML = '';
+  document.getElementById('publishModal').classList.add('open');
+}
+function closePublish() {
+  document.getElementById('publishModal').classList.remove('open');
+}
+
+async function doPublish() {
+  const token   = document.getElementById('ghToken').value.trim();
+  const repoRaw = document.getElementById('ghRepo').value.trim();
+  const user    = document.getElementById('ghUser').value.trim();
+  if (!token || !repoRaw || !user) return setStatus('error','Please fill in all fields.');
+
+  // GitHub repo names cannot have spaces — convert to hyphens and lowercase
+  const repo = repoRaw.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._-]/g, '');
+  if (!repo) return setStatus('error', 'Repository name is invalid after sanitizing.');
+
+  // Show the user what name will actually be used if it changed
+  if (repo !== repoRaw) {
+    document.getElementById('ghRepo').value = repo;
+    document.getElementById('repoNote').textContent = `Name sanitized to: "${repo}" (GitHub doesn't allow spaces)`;
+    document.getElementById('repoNote').style.display = 'block';
+  }
+
+  localStorage.setItem('gh_user', user);
+  localStorage.setItem('gh_repo', repo);
+
+  const btn = document.getElementById('publishBtn');
+  btn.disabled = true; btn.textContent = 'Publishing…';
+  setStatus('','');
+
+  try {
+    const hdrs = {
+      'Authorization': `token ${token}`,
+      'Content-Type':  'application/json',
+      'Accept':        'application/vnd.github.v3+json'
+    };
+
+    // Ensure repo exists
+    const repoCheck = await fetch(`https://api.github.com/repos/${user}/${repo}`, {headers:hdrs});
+    if (repoCheck.status === 404) {
+      const cr = await fetch('https://api.github.com/user/repos', {
+        method:'POST', headers:hdrs,
+        body: JSON.stringify({ name:repo, description:'Weekly Task Tracker', auto_init:true, private:false })
+      });
+      if (!cr.ok) {
+        const errBody = await cr.json().catch(()=>({}));
+        const msg = errBody.errors?.[0]?.message || errBody.message || 'Unknown error';
+        throw new Error(`Could not create repository: ${msg}. Make sure your token has the "repo" scope.`);
+      }
+      await new Promise(r=>setTimeout(r,2500));
+    }
+
+    // Push .nojekyll — disables Jekyll so GitHub Pages serves plain HTML without errors
+    const njChk = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/.nojekyll`, {headers:hdrs});
+    const njSha = njChk.ok ? (await njChk.json()).sha : null;
+    await fetch(`https://api.github.com/repos/${user}/${repo}/contents/.nojekyll`, {
+      method:'PUT', headers:hdrs,
+      body: JSON.stringify({
+        message: 'Disable Jekyll',
+        content: btoa(''),   // empty file
+        ...(njSha ? {sha: njSha} : {})
+      })
+    });
+
+    // Get existing index.html SHA
+    const fChk = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/index.html`, {headers:hdrs});
+    const sha  = fChk.ok ? (await fChk.json()).sha : null;
+
+    // Encode current page
+    const html    = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    const encoded = btoa(unescape(encodeURIComponent(html)));
+
+    const push = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/index.html`, {
+      method:'PUT', headers:hdrs,
+      body: JSON.stringify({
+        message: `Update task tracker · ${new Date().toLocaleString()}`,
+        content: encoded,
+        ...(sha ? {sha} : {})
+      })
+    });
+    if (!push.ok) { const e=await push.json(); throw new Error(e.message || 'Push failed'); }
+
+    // Enable Pages (ignore errors if already enabled)
+    await fetch(`https://api.github.com/repos/${user}/${repo}/pages`, {
+      method:'POST', headers:hdrs,
+      body: JSON.stringify({ source:{ branch:'main', path:'/' } })
+    });
+
+    const url = `https://${user}.github.io/${repo}/`;
+    setStatus('success',
+      `✅ Published! Live at: <a href="${url}" target="_blank" rel="noopener">${url}</a><br>
+       <small style="opacity:.8">GitHub Pages usually goes live in 1–2 minutes.</small>`);
+
+  } catch(e) {
+    setStatus('error', `❌ ${e.message}`);
+  } finally {
+    btn.disabled = false; btn.textContent = '🚀 Publish';
+  }
+}
+
+function setStatus(type, html) {
+  const el = document.getElementById('publishStatus');
+  el.className = `status-msg ${type}`;
+  el.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+═══════════════════════════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter' && document.activeElement===document.getElementById('taskInput')) {
+    addTask();
+  }
+  if (e.key==='Escape') {
+    ['taskInput','taskTag','taskNote'].forEach(id => document.getElementById(id).value='');
+    closePublish();
+  }
+});
+
+/* Close modal on overlay click */
+document.getElementById('publishModal').addEventListener('click', e => {
+  if (e.target===e.currentTarget) closePublish();
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOOT
+═══════════════════════════════════════════════════════════════════ */
+load();
+loadTheme();
+render();
+setInterval(tickDurations, 60_000);
+</script>
+
+
+</body></html>
